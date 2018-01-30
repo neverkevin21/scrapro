@@ -2,6 +2,7 @@
 
 import re
 import six
+import json
 import yaml
 import copy
 import types
@@ -9,6 +10,7 @@ import scrapy
 
 from scrapy import Request
 from scrapy.item import DictItem
+from scrapy.http import Response
 from scrapy.exceptions import NotConfigured
 
 _tmpl = """
@@ -110,7 +112,7 @@ class ScraproSpider(scrapy.Spider):
         if '_' not in k:
             return v
 
-        k, types = k.rsplit('_')
+        k, ktype = k.rsplit('_')
         if isinstance(v, six.string_types):
             exps, arr = v, False
         elif isinstance(v, dict):
@@ -118,24 +120,32 @@ class ScraproSpider(scrapy.Spider):
         else:
             raise TypeError("Unexcepted Item type, excepting string or dict")
 
-        if types in ('xpath', 'css'):
+        if ktype in ('xpath', 'css'):
             if k == 'lines':
                 return response.xpath(exps)
             return response.xpath(exps).extract() if arr else response.xpath(exps).extract_first()
 
-        if types == 're':
+        if ktype == 're':
             result = re.findall(exps, response)
             return result if arr else result[0]
 
-        if types == 'code':
+        if ktype == 'code':
             exec exps
             return val
 
-        if types == 'eval':
-            return eval(v)
+        if ktype == 'eval':
+            return eval(exps)
 
-        if types == 'json':
-            return eval(v)
+        if ktype == 'json':
+            if isinstance(response, Response):
+                response = json.loads(response.body)
+            elif isinstance(response, six.string_types):
+                response = json.loads(response)
+            keys = exps.split('.')
+            tmp = response
+            for key in keys:
+                tmp = tmp[key]
+            return tmp
 
     def _find_key(self, d, prefix):
         _key = [k for k in d.keys() if k.startswith(prefix)]
