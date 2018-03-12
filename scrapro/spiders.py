@@ -45,24 +45,29 @@ class ScraproSpider(scrapy.Spider):
         if not urls_key:
             raise NotConfigured
         urls = self._extract(urls_key, conf[urls_key], None)
+
+        if isinstance(urls, six.string_types):
+            urls = [urls]
         for url in urls:
             yield Request(url, self.parse)
 
     def _extract_item(self, items, _cyield, response):
         meta = response.meta
         meta_data = meta.get('data', {})
+        if not items:
+            items = {}
         line_key = self._find_key(items, 'line')
         if line_key:
             v = items[line_key]
             lines = self._extract(line_key, v, response)
             items.pop(line_key)
             for line in lines:
-                data = {k.rsplit('_')[0]: self._extract(k, v, response, line=line)
+                data = {k.rsplit('_', 1)[0]: self._extract(k, v, response, line=line)
                         for k, v in items.items() if k != 'yield'}
                 data.update(meta_data)
                 yield self._yield(items, response, data)
         else:
-            data = {k.rsplit('_')[0]: self._extract(k, v, response)
+            data = {k.rsplit('_', 1)[0]: self._extract(k, v, response)
                     for k, v in items.items() if k != 'yield'}
             data.update(meta_data)
         if _cyield:
@@ -70,11 +75,12 @@ class ScraproSpider(scrapy.Spider):
 
     def _yield(self, items, response, data):
         if not items.get('yield'):
-            return None
+            return
         info = items.get('yield')
         if isinstance(info, six.string_types):
             if info != 'item':
                 raise TypeError("unkwnown yield type, excepting `item`.")
+
             item_cls = self.create_item('ScraproItem', data.keys())
             item = item_cls(data)
             return item
@@ -101,7 +107,7 @@ class ScraproSpider(scrapy.Spider):
             for k, v in info['meta'].items():
                 if '_' not in k:
                     continue
-                info['meta'][k.rsplit('_')[0]] = self._extract(k, v, None, data=data)
+                info['meta'][k.rsplit('_', 1)[0]] = self._extract(k, v, None, data=data)
                 info['meta'].pop(k)
         return info
 
@@ -112,7 +118,7 @@ class ScraproSpider(scrapy.Spider):
         if '_' not in k:
             return v
 
-        k, ktype = k.rsplit('_')
+        k, ktype = k.rsplit('_', 1)
         if isinstance(v, six.string_types):
             exps, arr = v, False
         elif isinstance(v, dict):
