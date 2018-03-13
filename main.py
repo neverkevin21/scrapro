@@ -14,7 +14,7 @@ prj_dir = os.path.dirname(os.path.realpath(__file__))
 tmpl_dir = os.path.join(prj_dir, 'tmpls')
 
 
-def process(tmpl):
+def run(tmpl):
     tmpl_path = os.path.join(tmpl_dir, '{}.yaml'.format(tmpl))
     # TODO: Tmpl Obj.
     with open(tmpl_path, 'r') as f:
@@ -38,4 +38,4 @@ def process(tmpl):
 
 
 if __name__ == "__main__":
-    fire.Fire(process)
+    fire.Fire(run)
