@@ -6,8 +6,8 @@ import yaml
 import fire
 
 from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
 
+from scrapro.utils import configure_settings
 from scrapro.spiders import ScraproSpider
 
 prj_dir = os.path.dirname(os.path.realpath(__file__))
@@ -21,17 +21,7 @@ def run(tmpl):
         conf = yaml.load(f)
     custom_settings = conf['settings']
     # TODO: configure settings for each spider.
-    settings = get_project_settings()
-    for k, v in custom_settings.items():
-        if k in settings.keys():
-            if isinstance(v, dict):
-                settings.update({k: v})
-            elif isinstance(v, list):
-                settings.get(k).append(v)
-            else:
-                settings.set(k, v)
-        else:
-            settings.set(k, v)
+    settings = configure_settings(custom_settings)
     process = CrawlerProcess(settings)
     process.crawl(ScraproSpider, tmpl_path)
     process.start()
