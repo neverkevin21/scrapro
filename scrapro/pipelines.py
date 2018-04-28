@@ -61,3 +61,4 @@ class FlumePipeline(object):
 
     def batch(self):
         self.client.appendBatch(self.events)
+        self.events = []
