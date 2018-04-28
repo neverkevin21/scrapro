@@ -31,4 +31,8 @@ settings:
         User-Agent: 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2774.3 Safari/537.36'
     ITEM_PIPELINES:
         scrapro.pipelines.TestPipeline: 300
+        scrapro.pipelines.FlumePipeline: 200
     LOG_LEVEL: INFO
+    flume_conf:
+        host: 127.0.0.1
+        port: 8090

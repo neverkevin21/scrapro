@@ -15,7 +15,6 @@ from thrift_gen.flume.ttypes import ThriftFlumeEvent
 class TestPipeline(object):
 
     def process_item(self, item, spider):
-        print 'scraped item: '
         pprint(item)
         return item
 
@@ -31,7 +30,7 @@ class FlumePipeline(object):
         self.events = []
 
     @classmethod
-    def from_settings(cls, crawler):
+    def from_crawler(cls, crawler):
         flume_conf = crawler.settings.get('flume_conf')
         return cls(flume_conf)
 
@@ -56,6 +55,8 @@ class FlumePipeline(object):
             body=json.dumps(dict(item))
         )
         self.events.append(event)
+        if len(self.events) >= self.batch_size:
+            self.batch()
         return item
 
     def batch(self):
